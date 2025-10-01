@@ -6,3 +6,4 @@ Project to track the airplanes of the Fox Flying Club
 - Added Google Maps to repo
 - - Plan: use folio to map data from .csv or .json files onto the open source mapping software
 - (https://python-visualization.github.io/folium/latest/getting_started.html)
+this is a test!

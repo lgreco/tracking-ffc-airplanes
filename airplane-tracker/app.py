@@ -36,7 +36,7 @@ def index():
     Homepage route.
     RN returns a simple JSON message indicating the API is running.
     """
-    return jsonify({"message": "FFC Aircraft Tracker API", "status": "running"})
+    return jsonify({'message': 'FFC Aircraft Tracker API', 'status': 'running'})
     # return render_template("index.html") -> comment this back in when html is done to replace previous line
 
 

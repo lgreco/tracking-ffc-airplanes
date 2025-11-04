@@ -1,0 +1,194 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+    color: #333;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: white;
+}
+
+header h1 {
+    font-size: 2.2em;
+    margin-bottom: 8px;
+}
+
+header p {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #5a6fd8;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 20px;
+    height: 70vh;
+}
+
+#map {
+    height: 100%;
+    background: #e8e8e8;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.sidebar {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    overflow-y: auto;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.stat-card {
+    background: #667eea;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-card h3 {
+    font-size: 0.8em;
+    margin-bottom: 5px;
+}
+
+.stat-card .value {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.aircraft-list {
+    margin-top: 15px;
+}
+
+.loading, .no-data, .error {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.error {
+    color: #e74c3c;
+}
+
+.aircraft-item {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #667eea;
+    cursor: pointer;
+}
+
+.aircraft-item:hover {
+    background: #e9ecef;
+}
+
+.aircraft-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.callsign {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.altitude {
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+}
+
+.aircraft-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    font-size: 0.85em;
+}
+
+.detail {
+    display: flex;
+    justify-content: space-between;
+}
+
+.label {
+    color: #7f8c8d;
+}
+
+.value {
+    font-weight: 600;
+}
+
+.last-update {
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.8em;
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+    
+    .sidebar {
+        order: -1;
+    }
+    
+    #map {
+        height: 400px;
+    }
+}

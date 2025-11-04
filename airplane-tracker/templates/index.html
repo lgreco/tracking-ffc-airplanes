@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FFC Airplane Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✈️ FFC Live Airplane Tracker</h1>
+            <p>Real-time tracking of FFC training aircraft</p>
+        </header>
+
+        <div class="controls">
+            <button id="refreshBtn">🔄 Refresh Data</button>
+            <button id="autoRefreshBtn">🔄 Auto-Refresh (30s)</button>
+            <button id="stopRefreshBtn">⏹️ Stop Auto-Refresh</button>
+        </div>
+
+        <div class="dashboard">
+            <div id="map"></div>
+            
+            <div class="sidebar">
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>Total Tracked</h3>
+                        <div class="value" id="totalAircraft">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Currently Transmitting</h3>
+                        <div class="value" id="activeAircraft">0</div>
+                    </div>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Loading aircraft data...</p>
+                </div>
+
+                <div class="aircraft-list" id="aircraftList">
+                    <div class="no-data">
+                        No aircraft data loaded. Click refresh to start tracking.
+                    </div>
+                </div>
+
+                <div class="last-update" id="lastUpdate">
+                    Last updated: Never
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

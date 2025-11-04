@@ -9,7 +9,7 @@
 # pip install -r requirements.txt
 # cd airplane-tracker 
 # python app.py
-
+import os
 
 from flask import Flask, render_template, jsonify  # Import Flask modules for server, templates, and JSON
 from flask_cors import CORS                        # Lets the frontend fetch data
@@ -28,6 +28,13 @@ import time  # To get timestamps
 app = Flask(__name__)  # Create a Flask app instance (starts the web server) 
 CORS(app)              # CORS so frontend JS can call API routes without issues
 
+# Debug: Print current directory and template path
+print(f"Current working directory: {os.getcwd()}")
+print(f"Template folder path: {app.template_folder}")
+print(f"Templates exist: {os.path.exists('templates')}")
+if os.path.exists('templates'):
+    print(f"Files in templates: {os.listdir('templates')}")
+
 # Routes
 
 @app.route("/")
@@ -36,8 +43,9 @@ def index():
     Homepage route.
     RN returns a simple JSON message indicating the API is running.
     """
-    return jsonify({'message': 'FFC Aircraft Tracker API', 'status': 'running'})
-    # return render_template("index.html") -> comment this back in when html is done to replace previous line
+    #return jsonify({'message': 'FFC Aircraft Tracker API', 'status': 'running'}) -> comment this back in when html is done to replace previous line
+    print("Rendering index.html...")
+    return render_template("index.html") 
 
 
 @app.route("/api/live/all")

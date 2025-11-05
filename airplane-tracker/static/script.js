@@ -17,7 +17,7 @@ loadData();
 
 */
 // Initialize the map - keeping your Chicago center but with FFC area
-let map = L.map('map').setView([41.8781, -87.6298], 5); // centered on Chicago
+let map = L.map('map').setView([41.9200, -88.2417], 10); // centered on Fox Flying Club
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let aircraftMarkers = [];

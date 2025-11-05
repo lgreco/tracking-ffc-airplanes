@@ -108,7 +108,7 @@ function createPopupContent(plane) {
         <div style="min-width: 200px;">
             <div style="font-weight: bold; margin-bottom: 8px;">${plane.callsign}</div>
             <div style="font-size: 0.9em;">
-                <div><strong>Altitude:</strong> ${plane.altitude ? Math.round(plane.altitude) + ' ft' : 'N/A'}</div>
+                <div><strong>Altitude:</strong> ${plane.altitude ? Math.round(plane.alitude) + ' ft' : 'N/A'}</div>
                 <div><strong>Speed:</strong> ${plane.velocity ? Math.round(plane.velocity) + ' kt' : 'N/A'}</div>
                 <div><strong>Heading:</strong> ${plane.heading ? Math.round(plane.heading) + '°' : 'N/A'}</div>
                 <div><strong>Status:</strong> ${plane.on_ground ? 'On Ground' : 'In Flight'}</div>

@@ -35,7 +35,7 @@ def get_oauth_token():
         return access_token
     
     try:
-        print("🔄 Requesting new OAuth2 token...")
+        print("Requesting new OAuth2 token...")
         response = requests.post(
             OAUTH_TOKEN_URL,
             data={
@@ -52,21 +52,21 @@ def get_oauth_token():
             access_token = token_data['access_token']
             # Token expires in 30 minutes, set expiry to 25 minutes for safety
             token_expiry = time.time() + (25 * 60)
-            print("✅ OAuth2 token obtained successfully")
+            print("OAuth2 token obtained successfully")
             return access_token
         else:
-            print(f"❌ OAuth2 token request failed: {response.status_code} - {response.text}")
+            print(f"OAuth2 token request failed: {response.status_code} - {response.text}")
             return None
             
     except Exception as e:
-        print(f"❌ OAuth2 token request failed: {e}")
+        print(f"OAuth2 token request failed: {e}")
         return None
 
 def make_authenticated_request(url, params=None):
     """Make authenticated request to OpenSky API"""
     token = get_oauth_token()
     if not token:
-        print("❌ No OAuth2 token available")
+        print("No OAuth2 token available")
         return None
     
     try:
@@ -76,17 +76,17 @@ def make_authenticated_request(url, params=None):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 401:
-            print("🔄 Token expired, refreshing...")
+            print("Token expired, refreshing...")
             # Token might be expired, clear it and retry once
             global access_token
             access_token = None
             return make_authenticated_request(url, params)
         else:
-            print(f"❌ Authenticated request failed: {response.status_code} - {response.text}")
+            print(f"Authenticated request failed: {response.status_code} - {response.text}")
             return None
             
     except Exception as e:
-        print(f"❌ Authenticated request failed: {e}")
+        print(f" Authenticated request failed: {e}")
         return None
 
 def get_all_states():
@@ -141,14 +141,14 @@ def get_flight_history(icao24, hours=48):
         flights_data = make_authenticated_request(url, params)
         
         if flights_data is not None:
-            print(f"✅ Found {len(flights_data)} flights for {icao24}")
+            print(f" Found {len(flights_data)} flights for {icao24}")
             return flights_data
         else:
-            print(f"❌ No flight history data for {icao24}")
+            print(f" No flight history data for {icao24}")
             return []
             
     except Exception as e:
-        print(f"❌ Flight history request failed for {icao24}: {e}")
+        print(f" Flight history request failed for {icao24}: {e}")
         return []
 
 def get_comprehensive_aircraft_data():

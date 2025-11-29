@@ -10,8 +10,8 @@
 # cd airplane-tracker 
 # python app.py
 import os
-
-from flask import Flask, render_template, jsonify  # Import Flask modules for server, templates, and JSON
+import threading 
+from flask import Flask, render_template, jsonify, request   # Import Flask modules for server, templates, and JSON
 from flask_cors import CORS                        # Lets the frontend fetch data
 from fetch_data import (                           # Import functions and data from fetch_data.py
     AIRCRAFT_MAP,             # Dictionary of aircraft registrations to ICAO24 codes
@@ -21,6 +21,14 @@ from fetch_data import (                           # Import functions and data f
     test_comprehensive_tracking  # Function to run a full test of current + history data
 )
 import time  # To get timestamps
+
+# Import the database
+try:
+    from database import db
+    DATABASE_AVAILABLE = True
+except ImportError:
+    print("⚠️  Database module not available - running without database features")
+    DATABASE_AVAILABLE = False
 
 
 # Initialize Flask app
@@ -34,6 +42,23 @@ print(f"Template folder path: {app.template_folder}")
 print(f"Templates exist: {os.path.exists('templates')}")
 if os.path.exists('templates'):
     print(f"Files in templates: {os.listdir('templates')}")
+
+def background_cleanup():
+    """Background task to clean up old data every hour"""
+    while True:
+        time.sleep(3600)  # Run every hour
+        try:
+            if DATABASE_AVAILABLE:
+                deleted_count = db.cleanup_old_data()
+                print(f"🔄 Database cleanup completed. Removed {deleted_count} old records.")
+        except Exception as e:
+            print(f"❌ Database cleanup error: {e}")
+
+# Start background cleanup thread if database is available
+if DATABASE_AVAILABLE:
+    cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
+    cleanup_thread.start()
+    print("✅ Database background cleanup started")
 
 # Routes
 
@@ -76,6 +101,13 @@ def get_all_live_data():
                     'on_ground': state[8],  # Boolean if on ground
                     'last_contact': state[4]  # Timestamp of last contact
                 })
+
+        # Save to database if available
+        if DATABASE_AVAILABLE and aircraft_data:
+            try:
+                db.save_aircraft_status(aircraft_data)
+            except Exception as e:
+                print(f"⚠️  Could not save to database: {e}")
         
         # Return JSON with timestamp, aircraft count, and aircraft data
         return jsonify({
@@ -98,6 +130,14 @@ def get_comprehensive_data():
     """
     try:
         comprehensive_data = get_comprehensive_aircraft_data()  # Get data for all aircraft
+
+        # Process and store flight data in database if available
+        if DATABASE_AVAILABLE:
+            try:
+                process_flight_data(comprehensive_data)
+            except Exception as e:
+                print(f"⚠️  Could not process flight data: {e}")
+
         # Return JSON with timestamp and full data
         return jsonify({
             'timestamp': int(time.time()),
@@ -132,10 +172,108 @@ def get_aircraft_history(registration):
     except Exception as e:
         # Return error if something fails
         return jsonify({'error': str(e)}), 500
+    
+# NEW DATABASE ENDPOINTS
+
+@app.route("/api/database/flights/recent")
+def get_recent_flights():
+    """Get recent flights from database"""
+    if not DATABASE_AVAILABLE:
+        return jsonify({'error': 'Database not available'}), 503
+        
+    try:
+        hours = request.args.get('hours', 48, type=int)
+        flights = db.get_recent_flights(hours)
+        return jsonify({
+            'timestamp': int(time.time()),
+            'flights': flights,
+            'count': len(flights)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/database/aircraft/<registration>/history")
+def get_database_aircraft_history(registration):
+    """Get aircraft flight history from database"""
+    if not DATABASE_AVAILABLE:
+        return jsonify({'error': 'Database not available'}), 503
+        
+    try:
+        hours = request.args.get('hours', 48, type=int)
+        flights = db.get_aircraft_flight_history(registration, hours)
+        
+        # Get statistics if available
+        stats = {}
+        try:
+            stats = db.get_aircraft_stats(registration)
+        except:
+            pass  # Stats are optional
+        
+        return jsonify({
+            'registration': registration,
+            'flights': flights,
+            'stats': stats,
+            'count': len(flights)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route("/api/database/stats")
+def get_database_stats():
+    """Get overall database statistics"""
+    if not DATABASE_AVAILABLE:
+        return jsonify({'error': 'Database not available'}), 503
+        
+    try:
+        # Get recent flight count from database
+        recent_flights = db.get_recent_flights(hours=48)
+        
+        return jsonify({
+            'timestamp': int(time.time()),
+            'total_tracked_aircraft': len(AIRCRAFT_MAP),
+            'recent_flights_count': len(recent_flights),
+            'database_available': True
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+def process_flight_data(comprehensive_data):
+    """Process flight data and store in database"""
+    try:
+        for icao24, data in comprehensive_data.items():
+            if data.get('flight_history'):
+                for flight in data['flight_history']:
+                    # Convert flight data to database format
+                    flight_session = {
+                        'icao24': icao24,
+                        'callsign': flight.get('callsign'),
+                        'departure_airport': flight.get('estDepartureAirport'),
+                        'arrival_airport': flight.get('estArrivalAirport'),
+                        'departure_time': flight.get('firstSeen'),
+                        'arrival_time': flight.get('lastSeen'),
+                        'duration_minutes': int(flight.get('lastSeen', 0) - flight.get('firstSeen', 0)) // 60,
+                        'max_altitude': None,  # These would come from position data
+                        'max_speed': None,
+                        'distance_km': None,
+                        'first_seen': flight.get('firstSeen'),
+                        'last_seen': flight.get('lastSeen')
+                    }
+                    
+                    # Save to database
+                    db.save_flight_session(flight_session)
+    except Exception as e:
+        print(f"Error processing flight data: {e}")
 
 # Main entry point
 
 if __name__ == "__main__":
+    # Run cleanup once at startup if database available
+    if DATABASE_AVAILABLE:
+        try:
+            deleted_count = db.cleanup_old_data()
+            print(f"🗑️  Initial database cleanup removed {deleted_count} old records")
+        except Exception as e:
+            print(f"⚠️  Initial database cleanup failed: {e}")
     # Optional test?
     test_comprehensive_tracking()
     
@@ -145,6 +283,14 @@ if __name__ == "__main__":
     print("  /api/live/all - Current aircraft data only")
     print("  /api/comprehensive/all - Current + flight history")
     print("  /api/history/<registration> - Flight history for a specific aircraft")
+
+    if DATABASE_AVAILABLE:
+        print("  /api/database/flights/recent - Recent flights from database")
+        print("  /api/database/aircraft/<registration>/history - Aircraft history from DB")
+        print("  /api/database/stats - Database statistics")
+        print("✅ Database features ENABLED")
+    else:
+        print("⚠️  Database features DISABLED - create database.py to enable")
     
     # Start Flask development server
     app.run(debug=True, host="0.0.0.0", port=5000)

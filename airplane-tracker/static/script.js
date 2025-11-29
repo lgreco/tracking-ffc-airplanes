@@ -32,19 +32,42 @@ async function loadData() {
             aircraftList.innerHTML = '<div class="loading">Loading aircraft data...</div>';
         }
 
-        let response = await fetch('/api/live/all');
-        let data = await response.json();
+        // Fetch comprehensive data (includes both live and history)
+        let response = await fetch('/api/comprehensive/all');
+        let comprehensiveData = await response.json();
         
         // Clear existing markers
         aircraftMarkers.forEach(marker => map.removeLayer(marker));
         aircraftMarkers = [];
         
-        // Update stats if elements exist
-        updateStats(data);
+        // Extract current aircraft for display
+        let currentAircraft = [];
+        let total24hFlights = 0;
         
-        // Process aircraft data
-        if (data.aircraft && data.aircraft.length > 0) {
-            data.aircraft.forEach(plane => {
+        Object.keys(comprehensiveData.data).forEach(icao24 => {
+            const aircraftData = comprehensiveData.data[icao24];
+            
+            // Count flights from last 24 hours
+            if (aircraftData.flight_history) {
+                total24hFlights += aircraftData.flight_history.length;
+            }
+            
+            // Add to current aircraft list if transmitting
+            if (aircraftData.current_state) {
+                currentAircraft.push(aircraftData.current_state);
+            }
+        });
+        
+        // Update stats
+        updateStats({
+            aircraft_count: currentAircraft.length,
+            total_tracked: Object.keys(comprehensiveData.data).length,
+            flights_24h: total24hFlights
+        });
+        
+        // Process aircraft data for map
+        if (currentAircraft.length > 0) {
+            currentAircraft.forEach(plane => {
                 if (plane.latitude && plane.longitude) {
                     // Create a custom icon based on aircraft status
                     const icon = createAircraftIcon(plane);
@@ -57,8 +80,8 @@ async function loadData() {
                 }
             });
             
-            // Update aircraft list if element exists
-            updateAircraftList(data.aircraft);
+            // Update aircraft list
+            updateAircraftList(currentAircraft);
             
             // Adjust map view to show all aircraft
             if (aircraftMarkers.length > 0) {
@@ -71,6 +94,9 @@ async function loadData() {
                 aircraftList.innerHTML = '<div class="no-data">No aircraft currently transmitting data</div>';
             }
         }
+        
+        // Update flight history list
+        updateFlightHistoryList(comprehensiveData);
         
         updateLastUpdate();
         
@@ -125,13 +151,16 @@ function createPopupContent(plane) {
 function updateStats(data) {
     const activeElement = document.getElementById('activeAircraft');
     const totalElement = document.getElementById('totalAircraft');
+    const flights24hElement = document.getElementById('flights24h');
     
     if (activeElement) {
         activeElement.textContent = data.aircraft_count || 0;
     }
     if (totalElement) {
-        // This would need to come from your AIRCRAFT_MAP - showing active count for now
-        totalElement.textContent = data.aircraft_count || 0;
+        totalElement.textContent = data.total_tracked || 0;
+    }
+    if (flights24hElement) {
+        flights24hElement.textContent = data.flights_24h || 0;
     }
 }
 
@@ -202,6 +231,106 @@ function stopAutoRefresh() {
 // Manual refresh
 function refreshData() {
     loadData();
+}
+
+// Update flight history list
+function updateFlightHistoryList(comprehensiveData) {
+    const flightHistoryList = document.getElementById('flightHistoryList');
+    if (!flightHistoryList) return;
+
+    let allFlights = [];
+    
+    // Collect all flights from all aircraft
+    Object.keys(comprehensiveData.data).forEach(icao24 => {
+        const aircraftData = comprehensiveData.data[icao24];
+        const registration = aircraftData.registration || icao24;
+        
+        if (aircraftData.flight_history && aircraftData.flight_history.length > 0) {
+            aircraftData.flight_history.forEach(flight => {
+                allFlights.push({
+                    ...flight,
+                    registration: registration,
+                    icao24: icao24
+                });
+            });
+        }
+    });
+    
+    // Remove duplicates based on icao24, callsign, firstSeen, and lastSeen
+    const uniqueFlights = [];
+    const seenFlights = new Set();
+    
+    allFlights.forEach(flight => {
+        // Create a unique key for each flight
+        const flightKey = `${flight.icao24}-${flight.callsign}-${flight.firstSeen}-${flight.lastSeen}`;
+        
+        if (!seenFlights.has(flightKey)) {
+            seenFlights.add(flightKey);
+            uniqueFlights.push(flight);
+        }
+    });
+    
+    // Sort flights by first seen time (most recent first)
+    uniqueFlights.sort((a, b) => (b.firstSeen || 0) - (a.firstSeen || 0));
+    
+    if (uniqueFlights.length === 0) {
+        flightHistoryList.innerHTML = '<div class="no-data">No flights in the past 24 hours</div>';
+        return;
+    }
+    
+    // Display flights
+    flightHistoryList.innerHTML = uniqueFlights.map(flight => {
+        const callsign = (flight.callsign || 'N/A').trim();
+        const departure = flight.estDepartureAirport || 'Unknown';
+        const arrival = flight.estArrivalAirport || 'Unknown';
+        
+        // Format times
+        const departureTime = flight.firstSeen 
+            ? new Date(flight.firstSeen * 1000).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })
+            : 'N/A';
+            
+        const arrivalTime = flight.lastSeen 
+            ? new Date(flight.lastSeen * 1000).toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+              })
+            : 'N/A';
+        
+        // Calculate duration
+        let duration = 'N/A';
+        if (flight.firstSeen && flight.lastSeen) {
+            const durationMin = Math.round((flight.lastSeen - flight.firstSeen) / 60);
+            const hours = Math.floor(durationMin / 60);
+            const minutes = durationMin % 60;
+            duration = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+        }
+        
+        return `
+            <div class="flight-item">
+                <div class="flight-header">
+                    <span class="flight-callsign">${callsign}</span>
+                    <span class="flight-registration">${flight.registration}</span>
+                </div>
+                <div class="flight-route">
+                    <span><strong>${departure}</strong></span>
+                    <span>→</span>
+                    <span><strong>${arrival}</strong></span>
+                </div>
+                <div class="flight-details">
+                    <div>Departure: ${departureTime}</div>
+                    <div>Arrival: ${arrivalTime}</div>
+                    <div>Duration: ${duration}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Initialize when page loads

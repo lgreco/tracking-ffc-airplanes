@@ -78,7 +78,7 @@ button:hover {
 
 .stats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 10px;
     margin-bottom: 15px;
 }
@@ -175,6 +175,64 @@ button:hover {
     margin-top: 15px;
     padding-top: 10px;
     border-top: 1px solid #eee;
+}
+
+.flight-history-list {
+    margin-top: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.flight-item {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-left: 4px solid #3498db;
+}
+
+.flight-item:hover {
+    background: #e3ebff;
+}
+
+.flight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.flight-callsign {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.flight-registration {
+    background: #3498db;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8em;
+}
+
+.flight-details {
+    font-size: 0.85em;
+    color: #555;
+}
+
+.flight-route {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+    padding: 5px;
+    background: white;
+    border-radius: 4px;
+}
+
+.flight-time {
+    color: #7f8c8d;
+    font-size: 0.8em;
+    margin-top: 5px;
 }
 
 /* Responsive */

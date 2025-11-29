@@ -32,6 +32,10 @@
                         <h3>Currently Transmitting</h3>
                         <div class="value" id="activeAircraft">0</div>
                     </div>
+                    <div class="stat-card">
+                        <h3>Flights (24hrs)</h3>
+                        <div class="value" id="flights24h">0</div>
+                    </div>
                 </div>
 
                 <div class="loading" id="loading">
@@ -39,9 +43,17 @@
                     <p>Loading aircraft data...</p>
                 </div>
 
+                <h3 style="margin-bottom: 10px; color: #2c3e50;">Active Flights</h3>
                 <div class="aircraft-list" id="aircraftList">
                     <div class="no-data">
                         No aircraft data loaded. Click refresh to start tracking.
+                    </div>
+                </div>
+
+                <h3 style="margin: 20px 0 10px 0; color: #2c3e50;">Recent Flights (24 hours)</h3>
+                <div class="flight-history-list" id="flightHistoryList">
+                    <div class="no-data">
+                        No flight history available.
                     </div>
                 </div>
 

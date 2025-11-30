@@ -108,6 +108,86 @@ async function loadData() {
         }
     }
 }
+// Add these new functions to your script.js
+
+async function loadRecentFlights() {
+    try {
+        const response = await fetch('/api/database/flights/recent?hours=24');
+        const data = await response.json();
+        
+        if (data.flights && data.flights.length > 0) {
+            updateFlightHistoryList(data.flights);
+            updateFlights24hCount(data.count);
+        } else {
+            document.getElementById('flightHistoryList').innerHTML = 
+                '<div class="no-data">No flights in the last 24 hours</div>';
+            document.getElementById('flights24h').textContent = '0';
+        }
+    } catch (error) {
+        console.error('Error loading recent flights:', error);
+        document.getElementById('flightHistoryList').innerHTML = 
+            '<div class="error">Error loading flight history</div>';
+    }
+}
+
+function updateFlightHistoryList(flights) {
+    const flightListElement = document.getElementById('flightHistoryList');
+    
+    flightListElement.innerHTML = flights.map(flight => `
+        <div class="flight-item">
+            <div class="flight-header">
+                <span class="flight-callsign">${flight.callsign || 'N/A'}</span>
+                <span class="flight-duration">${flight.duration_minutes || 0} min</span>
+            </div>
+            <div class="flight-details">
+                <div class="flight-route">
+                    ${flight.departure_airport || 'Unknown'} → ${flight.arrival_airport || 'Unknown'}
+                </div>
+                <div class="flight-times">
+                    ${formatDatabaseTimestamp(flight.departure_time)} - ${formatDatabaseTimestamp(flight.arrival_time)}
+                </div>
+                <div class="flight-aircraft">
+                    ${flight.registration} • Alt: ${flight.max_altitude ? Math.round(flight.max_altitude) + ' ft' : 'N/A'}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateFlights24hCount(count) {
+    document.getElementById('flights24h').textContent = count;
+}
+
+function formatDatabaseTimestamp(timestamp) {
+    if (!timestamp) return 'N/A';
+    return new Date(timestamp * 1000).toLocaleTimeString();
+}
+
+// Load database stats
+async function loadDatabaseStats() {
+    try {
+        const response = await fetch('/api/database/stats');
+        const data = await response.json();
+        
+        if (!data.error && data.recent_flights_count !== undefined) {
+            document.getElementById('flights24h').textContent = data.recent_flights_count;
+        }
+    } catch (error) {
+        console.error('Error loading database stats:', error);
+    }
+}
+
+// Update your existing loadData function to also load recent flights
+async function loadData() {
+    await fetchAircraftData();  // Your existing function
+    await loadRecentFlights();  // New: Load from database
+    await loadDatabaseStats(); // Load databse statistics
+}
+
+// Update your refresh button to load both
+document.getElementById('refreshBtn').addEventListener('click', function() {
+    loadData();  // Now loads both live data AND database flights
+});
 
 // Create custom aircraft icon
 function createAircraftIcon(plane) {
@@ -211,7 +291,9 @@ function updateLastUpdate() {
     if (lastUpdate) {
         lastUpdate.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
     }
+    
 }
+updateLastUpdate();
 
 // Auto-refresh functions
 function startAutoRefresh() {
